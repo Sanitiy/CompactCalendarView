@@ -5,6 +5,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -13,8 +14,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 
@@ -29,7 +31,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
-import java.util.TimeZone;
 
 public class CompactCalendarTab extends Fragment {
 
@@ -40,6 +41,7 @@ public class CompactCalendarTab extends Fragment {
     private boolean shouldShow = false;
     private CompactCalendarView compactCalendarView;
     private ActionBar toolbar;
+    ListView eventsListView;
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -47,18 +49,14 @@ public class CompactCalendarTab extends Fragment {
 
         final List<String> mutableBookings = new ArrayList<>();
 
-        final ListView bookingsListView = mainTabView.findViewById(R.id.bookings_listview);
-        final Button showPreviousMonthBut = mainTabView.findViewById(R.id.prev_button);
-        final Button showNextMonthBut = mainTabView.findViewById(R.id.next_button);
-        final Button slideCalendarBut = mainTabView.findViewById(R.id.slide_calendar);
-        final Button showCalendarWithAnimationBut = mainTabView.findViewById(R.id.show_with_animation_calendar);
-        final Button setLocaleBut = mainTabView.findViewById(R.id.set_locale);
-        final Button removeAllEventsBut = mainTabView.findViewById(R.id.remove_all_events);
+        eventsListView = mainTabView.findViewById(R.id.bookings_listview);
+        FloatingActionButton addEventButton = mainTabView.findViewById(R.id.add_event_button);
 
-        final ArrayAdapter adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1, mutableBookings);
-        bookingsListView.setAdapter(adapter);
+        final ArrayAdapter<String> adapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1, mutableBookings);
+        eventsListView.setAdapter(adapter);
+        eventsListView.setOnItemLongClickListener(new EventListOnLongClickListener());
+
         compactCalendarView = mainTabView.findViewById(R.id.compactcalendar_view);
-
         // below allows you to configure color for the current day in the month
         // compactCalendarView.setCurrentDayBackgroundColor(getResources().getColor(R.color.black));
         // below allows you to configure colors for the current day the user has selected
@@ -114,25 +112,10 @@ public class CompactCalendarTab extends Fragment {
             }
         });
 
-        showPreviousMonthBut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                compactCalendarView.scrollLeft();
-            }
-        });
-
-        showNextMonthBut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                compactCalendarView.scrollRight();
-            }
-        });
-
         final View.OnClickListener showCalendarOnClickLis = getCalendarShowLis();
-        slideCalendarBut.setOnClickListener(showCalendarOnClickLis);
+
 
         final View.OnClickListener exposeCalendarListener = getCalendarExposeLis();
-        showCalendarWithAnimationBut.setOnClickListener(exposeCalendarListener);
 
         compactCalendarView.setAnimationListener(new CompactCalendarView.CompactCalendarAnimationListener() {
             @Override
@@ -144,29 +127,6 @@ public class CompactCalendarTab extends Fragment {
             }
         });
 
-        setLocaleBut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Locale locale = Locale.FRANCE;
-                dateFormatForDisplaying = new SimpleDateFormat("dd-M-yyyy hh:mm:ss a", locale);
-                TimeZone timeZone = TimeZone.getTimeZone("Europe/Paris");
-                dateFormatForDisplaying.setTimeZone(timeZone);
-                dateFormatForMonth.setTimeZone(timeZone);
-                compactCalendarView.setLocale(timeZone, locale);
-                compactCalendarView.setUseThreeLetterAbbreviation(false);
-                loadEvents();
-                loadEventsForYear(2017);
-                logEventsByMonth(compactCalendarView);
-
-            }
-        });
-
-        removeAllEventsBut.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                compactCalendarView.removeAllEvents();
-            }
-        });
 
 
         // uncomment below to show indicators above small indicator events
@@ -259,6 +219,7 @@ public class CompactCalendarTab extends Fragment {
         Log.d(TAG, "Events for Aug month using default local and timezone: " + compactCalendarView.getEventsForMonth(currentCalender.getTime()));
     }
 
+
     private void addEvents(int month, int year) {
         currentCalender.setTime(new Date());
         currentCalender.set(Calendar.DAY_OF_MONTH, 1);
@@ -303,4 +264,20 @@ public class CompactCalendarTab extends Fragment {
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
     }
+
+    class EventListOnLongClickListener implements ListView.OnItemLongClickListener
+    {
+        @Override
+        public boolean onItemLongClick(AdapterView<?> adapterView, View view, int i, long l)
+        {
+            Object dudu = adapterView.getItemAtPosition(i);
+            ListAdapter adapterList = CompactCalendarTab.this.eventsListView.getAdapter();
+            View focusedEvent = CompactCalendarTab.this.eventsListView.getFocusedChild();
+
+//            ListItem = adapterList.getItem(focusedEvent.getId());
+            return true; //TODO
+        }
+    }
+
+
 }
